@@ -1,0 +1,29 @@
+name: Android build and tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK components
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build and test Android app
+        run: ./gradlew --no-daemon assembleDebug testDebugUnitTest lintDebug
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test map behavior
+        run: |
+          npm ci --prefix tests
+          npm test --prefix tests

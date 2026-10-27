@@ -1,0 +1,14 @@
+const {JSDOM}=require('jsdom');const fs=require('fs');const path=require('path');const assert=require('assert/strict');
+const base=process.argv[2];const html=fs.readFileSync(path.join(base,'map.html'),'utf8');const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://appassets.androidplatform.net/map.html',pretendToBeVisual:true});const w=dom.window;
+Object.defineProperty(w.HTMLElement.prototype,'clientWidth',{get(){return 360}});Object.defineProperty(w.HTMLElement.prototype,'clientHeight',{get(){return 340}});
+w.eval(fs.readFileSync(path.join(base,'leaflet.js'),'utf8'));
+const code=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)][0][1];w.eval(code+';window.testMap={map,tiles,getPin:()=>pin};');
+assert.equal(w.document.querySelectorAll('.location-pin').length,0);
+w.showLocation(-6.1754,106.8272);assert.equal(w.document.querySelectorAll('.location-pin').length,1);
+w.showLocation(-6.2,106.81);assert.equal(w.document.querySelectorAll('.location-pin').length,1);
+assert.equal(w.testMap.getPin().getLatLng().lat,-6.2);assert.equal(w.testMap.getPin().getLatLng().lng,106.81);
+w.showLocation(NaN,181);assert.equal(w.testMap.getPin().getLatLng().lat,-6.2);
+assert.ok(w.document.querySelector('.leaflet-control-attribution').textContent.includes('OpenStreetMap'));
+w.testMap.tiles.fire('tileerror');assert.equal(w.document.getElementById('error').hidden,false);
+w.document.getElementById('retry').click();assert.equal(w.document.getElementById('error').hidden,true);
+w.close();console.log('PASS: real Leaflet in simulated DOM; marker creation/update, invalid input, attribution, tile-error message, retry. No network tiles requested.');

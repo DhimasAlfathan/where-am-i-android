@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "node map-logic.cjs ../app/src/main/assets"
+  },
+  "devDependencies": {
+    "jsdom": "30.0.1"
+  }
+}
